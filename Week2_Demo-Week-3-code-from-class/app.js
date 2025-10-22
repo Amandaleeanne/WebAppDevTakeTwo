@@ -1,14 +1,20 @@
 
 /* 
  * Express Server Application
- * Provides REST API endpoints for item management and basic web pages
+ * Provides REST API endpoints for item, user, and category management
  */
 
 const express = require('express');
 const itemModel = require('./models/item');
+const userModel = require('./models/user');
+const categoryModel = require('./models/category');
+const path = require('path');
 
 // Initialize Express application
 const app = express();
+
+// Serve static files for forms
+app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * Request logging middleware
@@ -229,6 +235,122 @@ app.delete('/items/:id', (req, res) => {
         console.error('Delete item error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+/**
+ * User Routes
+ */
+
+// List all users
+app.get('/users', (req, res) => {
+    try {
+        const users = userModel.List();
+        res.json(users);
+    } catch (error) {
+        console.error('List users error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get single user
+app.get('/users/:id', (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = userModel.Get(userId);
+
+        if (!user) {
+            return res.status(404).json({ 
+                error: 'User not found' 
+            });
+        }
+
+        res.json(user);
+    } catch (error) {
+        console.error('Get user error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create new user
+app.post('/users', (req, res) => {
+    try {
+        const validation = userModel.Validate(req.body);
+
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                error: validation.error 
+            });
+        }
+
+        const createdUser = userModel.Create(req.body);
+        res.status(201).json(createdUser);
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Serve user form
+app.get('/user-form', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'user-form.html'));
+});
+
+/**
+ * Category Routes
+ */
+
+// List all categories
+app.get('/categories', (req, res) => {
+    try {
+        const categories = categoryModel.List();
+        res.json(categories);
+    } catch (error) {
+        console.error('List categories error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get single category
+app.get('/categories/:id', (req, res) => {
+    try {
+        const categoryId = req.params.id;
+        const category = categoryModel.Get(categoryId);
+
+        if (!category) {
+            return res.status(404).json({ 
+                error: 'Category not found' 
+            });
+        }
+
+        res.json(category);
+    } catch (error) {
+        console.error('Get category error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create new category
+app.post('/categories', (req, res) => {
+    try {
+        const validation = categoryModel.Validate(req.body);
+
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                error: validation.error 
+            });
+        }
+
+        const createdCategory = categoryModel.Create(req.body);
+        res.status(201).json(createdCategory);
+    } catch (error) {
+        console.error('Create category error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Serve category form
+app.get('/category-form', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'category-form.html'));
 });
 
 // Server configuration

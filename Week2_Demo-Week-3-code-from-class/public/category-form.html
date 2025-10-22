@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create New Category</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Create New Category</h1>
+    <div id="error" class="error"></div>
+    <form id="categoryForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="color">Color:</label>
+            <input type="color" id="color" name="color" required>
+        </div>
+        <button type="submit">Create Category</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById('name').value,
+                color: document.getElementById('color').value
+            };
+
+            try {
+                const response = await fetch('/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    document.getElementById('result').innerHTML = 'Category created successfully!';
+                    document.getElementById('error').innerHTML = '';
+                    document.getElementById('categoryForm').reset();
+                } else {
+                    document.getElementById('error').innerHTML = result.error || 'Error creating category';
+                }
+            } catch (error) {
+                document.getElementById('error').innerHTML = 'Error connecting to server';
+            }
+        });
+    </script>
+</body>
+</html>
