@@ -1,92 +1,252 @@
 
-const express = require('express');
-const app = express();
-const itemModel = require('./models/item')
+/* 
+ * Express Server Application
+ * Provides REST API endpoints for item management and basic web pages
+ */
 
-// Example middleware: logs request method and URL
+const express = require('express');
+const itemModel = require('./models/item');
+
+// Initialize Express application
+const app = express();
+
+/**
+ * Request logging middleware
+ * Logs method and URL for each incoming request
+ */
 app.use((req, res, next) => {
-	console.log(`${req.method} ${req.url}`);
-	next();
+    try {
+        console.log(`${req.method} ${req.url}`);
+        next();
+    } catch (error) {
+        console.error('Logging middleware error:', error);
+        next(error);
+    }
 });
 
-// Lightweight CORS middleware so the React dev server (different origin) can call this API
+/**
+ * CORS middleware configuration
+ * Enables cross-origin requests from the React development server
+ */
 app.use((req, res, next) => {
-	res.header('Access-Control-Allow-Origin', '*')
-	res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-	res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-	if (req.method === 'OPTIONS') return res.sendStatus(200)
-	next()
-})
+    try {
+        // Set CORS headers
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header(
+            'Access-Control-Allow-Headers',
+            'Origin, X-Requested-With, Content-Type, Accept'
+        );
+        res.header(
+            'Access-Control-Allow-Methods',
+            'GET, POST, PUT, DELETE, OPTIONS'
+        );
 
-// Parse JSON bodies (for POST requests)
+        // Handle preflight requests
+        if (req.method === 'OPTIONS') {
+            return res.sendStatus(200);
+        }
+
+        next();
+    } catch (error) {
+        console.error('CORS middleware error:', error);
+        next(error);
+    }
+});
+
+// Enable JSON body parsing for POST/PUT requests
 app.use(express.json());
 
-// Default page
+/**
+ * Home page route
+ */
 app.get('/', (req, res) => {
-	res.send('Welcome to the LW Tech!');
+    try {
+        res.send('Welcome to the LW Tech!');
+    } catch (error) {
+        console.error('Home page error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-// About page
+/**
+ * About page route
+ */
 app.get('/about', (req, res) => {
-	res.send('This is the About Page.');
+    try {
+        res.send('This is the About Page.');
+    } catch (error) {
+        console.error('About page error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-// Contact page
+/**
+ * Contact page route
+ */
 app.get('/contact', (req, res) => {
-	res.send('Contact us at contact@example.com');
+    try {
+        res.send('Contact us at contact@example.com');
+    } catch (error) {
+        console.error('Contact page error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-// Example POST handler
+/**
+ * Contact form submission handler
+ */
 app.post('/contact', (req, res) => {
-	const { name, message } = req.body;
-	res.send(`Thank you, ${name}. Your message: "${message}" has been received.`);
+    try {
+        const { name = '', message = '' } = req.body;
+        
+        if (!name || !message) {
+            return res.status(400).json({ 
+                error: 'Name and message are required' 
+            });
+        }
+
+        res.send(
+            `Thank you, ${name}. Your message: "${message}" has been received.`
+        );
+    } catch (error) {
+        console.error('Contact submission error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-// Items API
-// GET /items - list all items
+/**
+ * List all items
+ * GET /items
+ */
 app.get('/items', (req, res) => {
-	res.json(itemModel.list())
-})
+    try {
+        const items = itemModel.List();
+        res.json(items);
+    } catch (error) {
+        console.error('List items error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
-// GET /items/:id - get single item
+/**
+ * Get single item by ID
+ * GET /items/:id
+ */
 app.get('/items/:id', (req, res) => {
-	const it = itemModel.get(req.params.id)
-	if (!it) return res.status(404).json({ error: 'Item not found' })
-	res.json(it)
-})
+    try {
+        const itemId = req.params.id;
+        const item = itemModel.Get(itemId);
 
-// POST /items - create new item
+        if (!item) {
+            return res.status(404).json({ 
+                error: 'Item not found' 
+            });
+        }
+
+        res.json(item);
+    } catch (error) {
+        console.error('Get item error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * Create new item
+ * POST /items
+ */
 app.post('/items', (req, res) => {
-	const validation = itemModel.validate(req.body)
-	if (!validation.valid) return res.status(400).json({ error: validation.error })
-	const created = itemModel.create(req.body)
-	res.status(201).json(created)
-})
+    try {
+        const validation = itemModel.Validate(req.body);
 
-// PUT /items/:id - update existing item
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                error: validation.error 
+            });
+        }
+
+        const createdItem = itemModel.Create(req.body);
+        res.status(201).json(createdItem);
+    } catch (error) {
+        console.error('Create item error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * Update existing item
+ * PUT /items/:id
+ */
 app.put('/items/:id', (req, res) => {
-	const existing = itemModel.get(req.params.id)
-	if (!existing) return res.status(404).json({ error: 'Item not found' })
-	const validation = itemModel.validate({ name: req.body.name ?? existing.name, description: req.body.description ?? existing.description })
-	if (!validation.valid) return res.status(400).json({ error: validation.error })
-	const updated = itemModel.update(req.params.id, req.body)
-	res.json(updated)
-})
+    try {
+        const itemId = req.params.id;
+        const existingItem = itemModel.Get(itemId);
 
-// DELETE /items/:id - delete item
+        if (!existingItem) {
+            return res.status(404).json({ 
+                error: 'Item not found' 
+            });
+        }
+
+        const updateData = {
+            name: req.body.name ?? existingItem.name,
+            description: req.body.description ?? existingItem.description
+        };
+
+        const validation = itemModel.Validate(updateData);
+
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                error: validation.error 
+            });
+        }
+
+        const updatedItem = itemModel.Update(itemId, req.body);
+        res.json(updatedItem);
+    } catch (error) {
+        console.error('Update item error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * Delete item by ID
+ * DELETE /items/:id
+ */
 app.delete('/items/:id', (req, res) => {
-	const existing = itemModel.get(req.params.id)
-	if (!existing) return res.status(404).json({ error: 'Item not found' })
-	itemModel.delete(req.params.id)
-	res.status(204).end()
-})
+    try {
+        const itemId = req.params.id;
+        const existingItem = itemModel.Get(itemId);
 
+        if (!existingItem) {
+            return res.status(404).json({ 
+                error: 'Item not found' 
+            });
+        }
+
+        itemModel.Delete(itemId);
+        res.status(204).end();
+    } catch (error) {
+        console.error('Delete item error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Server configuration
 const PORT = 3000;
 
+// Start server if this file is run directly
 if (require.main === module) {
-	app.listen(PORT, () => {
-		console.log(`Express server running at http://localhost:${PORT}`);
-	});
+    try {
+        app.listen(PORT, () => {
+            console.log(
+                `Express server running at http://localhost:${PORT}`
+            );
+        });
+    } catch (error) {
+        console.error('Server startup error:', error);
+        process.exit(1);
+    }
 }
 
-module.exports = app
+// Export app for testing purposes
+module.exports = app;

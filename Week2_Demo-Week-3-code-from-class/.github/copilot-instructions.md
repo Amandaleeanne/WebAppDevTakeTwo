@@ -46,11 +46,68 @@ This is a full-stack web application with:
    npm run client:preview  # Preview production build
    ```
 
+## Coding Conventions
+
+1. **Comments and Documentation**
+   - Use `//` for single line comments
+   - Use `/* */` for multi-line comments
+   - Each file should start with a descriptive header comment
+   - Document all methods with JSDoc comments including params and returns
+   ```javascript
+   /**
+    * Method description
+    * @param {type} paramName - Parameter description
+    * @returns {type} Return value description
+    */
+   ```
+
+2. **Code Style**
+   - One statement per line
+   - Add blank lines between method/property definitions
+   - Use consistent indentation (4 spaces)
+   - Break long statements for readability
+   ```javascript
+   res.header(
+       'Access-Control-Allow-Headers',
+       'Origin, X-Requested-With, Content-Type, Accept'
+   );
+   ```
+
+3. **Naming Conventions**
+   - Use camelCase for variables and private properties
+   - Use PascalCase for public methods and properties
+   - Prefix private properties with underscore
+   ```javascript
+   class ExampleClass {
+       constructor() {
+           this._privateVar = 'private';
+       }
+
+       PublicMethod() {
+           const localVar = this._privateVar;
+       }
+   }
+   ```
+
+4. **Error Handling**
+   - Wrap route handlers in try-catch blocks
+   - Log errors with descriptive messages
+   - Return appropriate HTTP status codes
+   - Include error details in response
+   ```javascript
+   try {
+       // Operation
+   } catch (error) {
+       console.error('Operation failed:', error);
+       res.status(500).json({ error: 'Internal server error' });
+   }
+   ```
+
 ## Project Patterns
 
 1. **State Management**
    - Frontend uses React's `useState` for local state
-   - Items fetched on visibility change (see `App.jsx` useEffect)
+   - Items fetched on visibility change
    - CRUD operations trigger immediate UI refresh
 
 2. **API Communication**
@@ -60,13 +117,13 @@ This is a full-stack web application with:
 
 3. **Error Handling**
    - Model includes validation for required fields
-   - Frontend gracefully handles API failures (empty array fallback)
+   - Frontend gracefully handles API failures
    - Backend middleware logs all requests
 
 ## Integration Points
 
 1. **Client-Server Communication**
-   - All API calls from frontend centralized in `App.jsx`
+   - All API calls centralized in `App.jsx`
    - Backend CORS configured for frontend dev server
    - JSON content type required for POST/PUT requests
 
