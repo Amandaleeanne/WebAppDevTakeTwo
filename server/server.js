@@ -1,18 +1,25 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
-const corsOptions = {
-  origin: 'http://localhost:5174',
-  optionsSuccessStatus: 200
-};
-const port = process.env.PORT || 3000;
 
-app.use(cors(corsOptions));
+const booksRouter = require('./routes/books');
+const authorsRouter = require('./routes/authors');
+const publishersRouter = require('./routes/publishers');
 
-app.get('/', (req, res) => {
-  res.json({ message: ['Hello from the server!'] });
-});
+const app = express();
+const PORT = 3000;
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+// Middleware
+app.use(cors());            // allow requests from frontend dev server
+app.use(express.json());    // parse JSON request bodies
+
+// Routes
+app.use('/api/books', booksRouter);
+app.use('/api/authors', authorsRouter);
+app.use('/api/publishers', publishersRouter);
+
+// Health check
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', now: new Date() }));
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
