@@ -10,7 +10,7 @@ export default function App() {
     // but multiple children
     <div style={{ padding: 20, fontFamily: 'system-ui, sans-serif' }}>
       <h1>Mini Library</h1>
-      <div style={{ display: 'flex', gap: 40 }}>
+      <div style={{ display: 'flex', gap: 50 }}>
         <div style={{ flex: 1 }}>
           <Books />
         </div>
