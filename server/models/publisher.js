@@ -1,14 +1,31 @@
-class Publisher {
-  constructor(initObject) {
-    if (!initObject || typeof initObject !== 'object') {
-      throw new Error('Publisher constructor requires an object argument');
+'use strict';
+
+const { Model } = require('sequelize');
+
+module.exports = (sequelize, DataTypes) => {
+  class Publisher extends Model {
+    static associate(models) {
+      Publisher.hasMany(models.Book, {
+        foreignKey: 'publisherId',
+        as: 'books'
+      });
     }
-
-    this.Id = Number(initObject.id || initObject.Id || 0);
-
-    this.Name = String(initObject.name || initObject.Name || '')
-      .trim();
   }
-}
 
-module.exports = Publisher;
+  Publisher.init(
+    {
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false
+      }
+    },
+    {
+      sequelize,
+      modelName: 'Publisher',
+      tableName: 'Publishers',
+      underscored: true
+    }
+  );
+
+  return Publisher;
+};
