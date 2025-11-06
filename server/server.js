@@ -15,7 +15,7 @@ const publishersRoutes = require('./routes/publishers');
 
 const app = express();
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 80;
 
 // connect to database before starting
 async function StartServer() {
@@ -40,8 +40,8 @@ async function StartServer() {
       return res.json({ status: 'ok', now: new Date().toISOString() });
     });
 
-    app.listen(PORT, function () {
-      console.log('Server running on http://localhost:' + String(PORT));
+    app.listen(PORT, HOST, function () {
+      console.log('Server running on http://' + String(HOST) + String(PORT));
     });
   } catch (err) {
     console.error('Unable to connect to the database:', err);
