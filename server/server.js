@@ -1,25 +1,52 @@
+// server/server.js
+require('dotenv').config();
+
 const express = require('express');
+
 const cors = require('cors');
 
-const booksRouter = require('./routes/books');
-const authorsRouter = require('./routes/authors');
-const publishersRouter = require('./routes/publishers');
+const db = require('./models'); // ensures Sequelize connects
+
+const booksRoutes = require('./routes/books');
+
+const authorsRoutes = require('./routes/authors');
+
+const publishersRoutes = require('./routes/publishers');
 
 const app = express();
-const PORT = 3000;
 
-// Middleware
-app.use(cors());            // allow requests from frontend dev server
-app.use(express.json());    // parse JSON request bodies
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-// Routes
-app.use('/api/books', booksRouter);
-app.use('/api/authors', authorsRouter);
-app.use('/api/publishers', publishersRouter);
+// connect to database before starting
+async function StartServer() {
+  try {
+    await db.sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
 
-// Health check
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', now: new Date() }));
+    // optional: sync models (not needed if you use migrations)
+    // await db.sequelize.sync();
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+    app.use(cors());
+
+    app.use(express.json());
+
+    app.use('/api/books', booksRoutes);
+
+    app.use('/api/authors', authorsRoutes);
+
+    app.use('/api/publishers', publishersRoutes);
+
+    app.get('/api/health', function (req, res) {
+      return res.json({ status: 'ok', now: new Date().toISOString() });
+    });
+
+    app.listen(PORT, function () {
+      console.log('Server running on http://localhost:' + String(PORT));
+    });
+  } catch (err) {
+    console.error('Unable to connect to the database:', err);
+    process.exit(1);
+  }
+}
+
+StartServer();

@@ -1,29 +1,68 @@
-const Author = require('../models/author');
+/* server/controllers/authorsController.js
+ *
+ * Uses Sequelize models to list, show, and create authors.
+ *
+ * Methods: List, Show, Create
+ */
 
-const authors = [
-  new Author({ id: 1, name: 'Alice Example' }),
-  new Author({ id: 2, name: 'Bob Sample' })
-];
+const db = require('../models');
 
-const nextId = () => (authors.length ? Math.max(...authors.map(a => a.id)) + 1 : 1);
+const Author = db.Author;
+
+/* List: GET /api/authors */
+async function List(req, res) {
+  try {
+    const authors = await Author.findAll();
+    return res.json(authors);
+  } catch (err) {
+    console.error('List authors failed:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/* Show: GET /api/authors/:id */
+async function Show(req, res) {
+  try {
+    const idParam = req.params.id || '0';
+    const numericId = Number(idParam);
+
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      return res.status(400).json({ error: 'Invalid id parameter' });
+    }
+
+    const found = await Author.findByPk(numericId);
+
+    if (!found) {
+      return res.status(404).json({ error: 'Author not found' });
+    }
+
+    return res.json(found);
+  } catch (err) {
+    console.error('Show author failed:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/* Create: POST /api/authors */
+async function Create(req, res) {
+  try {
+    const payload = req.body || {};
+
+    if (!payload.name || typeof payload.name !== 'string' || payload.name.trim() === '') {
+      return res.status(400).json({ errors: { name: 'Name is required' } });
+    }
+
+    const created = await Author.create({ name: payload.name.trim() });
+
+    return res.status(201).json(created);
+  } catch (err) {
+    console.error('Create author failed:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
 
 module.exports = {
-  list(req, res) {
-    res.json(authors);
-  },
-
-  show(req, res) {
-    const id = Number(req.params.id);
-    const item = authors.find(a => a.id === id);
-    if (!item) return res.status(404).json({ error: 'Author not found' });
-    res.json(item);
-  },
-
-  create(req, res) {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'name is required' });
-    const author = new Author({ id: nextId(), name });
-    authors.push(author);
-    res.status(201).json(author);
-  }
+  List: List,
+  Show: Show,
+  Create: Create
 };

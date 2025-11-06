@@ -1,32 +1,59 @@
-/* server/models/Book.js
- *
- * A minimal Book model implemented as a JavaScript class.
- * Public properties use PascalCase (Id, Title, AuthorId, PublisherId).
- * Private properties (none required here) would start with an underscore.
- */
+// server/models/book.js
+'use strict';
 
-class Book {
-  // Public constructor and properties use PascalCase
-  constructor(initObject) {
-    // Validate the parameter
-    if (!initObject || typeof initObject !== 'object') {
-      throw new Error('Book constructor requires an object argument');
+const { Model } = require('sequelize');
+
+module.exports = (sequelize, DataTypes) => {
+  class Book extends Model {
+    static associate(models) {
+      Book.belongsTo(models.Author, {
+        foreignKey: 'authorId',
+        as: 'author'
+      });
+
+      Book.belongsTo(models.Publisher, {
+        foreignKey: 'publisherId',
+        as: 'publisher'
+      });
     }
-
-    // Initialize public properties (PascalCase)
-    this.Id = Number(initObject.id || initObject.Id || 0);
-
-    this.Title = String(initObject.title || initObject.Title || '')
-      .trim();
-
-    this.AuthorId = initObject.authorId !== undefined
-      ? Number(initObject.authorId)
-      : null;
-
-    this.PublisherId = initObject.publisherId !== undefined
-      ? Number(initObject.publisherId)
-      : null;
   }
-}
 
-module.exports = Book;
+  Book.init(
+    {
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+
+      authorId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Authors',
+          key: 'id'
+        },
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE'
+      },
+
+      publisherId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Publishers',
+          key: 'id'
+        },
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE'
+      }
+    },
+    {
+      sequelize,
+      modelName: 'Book',
+      tableName: 'Books',
+      underscored: true
+    }
+  );
+
+  return Book;
+};
